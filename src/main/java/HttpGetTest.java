@@ -17,6 +17,8 @@ import java.time.format.DateTimeFormatter;
 import java.time.format.FormatStyle;
 import java.time.temporal.TemporalAccessor;
 import java.time.temporal.TemporalAdjusters;
+import java.util.Timer;
+import java.util.TimerTask;
 
 
 public class HttpGetTest {
@@ -53,9 +55,14 @@ public class HttpGetTest {
         System.out.println("原价/折扣价："+marketPrice+"/"+price);
         System.out.println("详细内容："+content);
         System.out.println("-------------\""+productName+"\"的价格波动--------------");
-        CheckCurrentPrice(priceKey,httpClientCM,url);
 
-
+        Timer timer = new Timer();
+        timer.schedule(new TimerTask() {
+            @Override
+            public void run() {
+                CheckCurrentPrice(priceKey,httpClientCM,url);
+            }
+        },5000,5000);
 
     }
 
