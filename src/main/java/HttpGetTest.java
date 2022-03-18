@@ -22,13 +22,10 @@ public class HttpGetTest {
 
     public static void main(String[] args) throws IOException {
 
-
-        //设置爬取的接口
+        //设置获取数据的接口
         String url = "https://j1.pupuapi.com/client/product/storeproduct/detail/7c1208da-907a-4391-9901-35a60096a3f9/f883cc75-7597-4c7a-a420-6ce5aa7fe2ed";
-
         //获得数据
         String data = doGet(url);
-        
         //获取关键key
         String specKey = "spec";
         String priceKey="price";
@@ -39,13 +36,14 @@ public class HttpGetTest {
         //将数据转换为对象
         JSONObject jsonObject = JSONObject.parseObject(data);
 
-        //
+        //从对象中获取数据
         String productName = jsonObject.getString(nameKey);
         String spec = jsonObject.getString(specKey);
         Float price = jsonObject.getFloat(priceKey)/100;
         Float marketPrice = jsonObject.getFloat(marketPriceKey)/100;
         String content = jsonObject.getString(shareContentKey);
 
+        //输出显示
         System.out.println("-----------商品："+productName+"------------------");
         System.out.println("规格："+spec);
         System.out.println("价格："+price);
@@ -53,6 +51,7 @@ public class HttpGetTest {
         System.out.println("详细内容："+content);
         System.out.println("-------------\""+productName+"\"的价格波动--------------");
 
+        //设置计时任务，每5000（5s）执行一次方法
         Timer timer = new Timer();
         timer.schedule(new TimerTask() {
             @Override
@@ -64,7 +63,11 @@ public class HttpGetTest {
 
     }
 
-    //创建连接池
+    /**
+     * 获得数据并处理
+     * @param url 请求的接口
+     * @return json数据
+     */
     public static String doGet(String url) {
         //设置httpclient
         CloseableHttpClient httpClient = HttpClients.createDefault();
@@ -100,25 +103,35 @@ public class HttpGetTest {
         return null;
     }
 
+    /**
+     * 检查时实价格
+     * @param priceKey 价格关键字
+     * @param url 请求的接口
+     */
     private static void CheckCurrentPrice(String priceKey,String url){
 
+        //获取json数据信息
         String data = doGet(url);
+        //转换对象
         JSONObject jsonObject = JSONObject.parseObject(data);
+        //获取价格
         Float price = jsonObject.getFloat(priceKey)/100;
+        //获取当前时间
         LocalDateTime now = LocalDateTime.now();
-
+        //转换当前日期
         String format = DateTimeFormatter.ofLocalizedDate(FormatStyle.FULL).format(now);
-
+        //获取当前时间
         LocalTime localTime = now.toLocalTime();
 
+        //添加内容
         StringBuilder stringBuilder = new StringBuilder();
-
         stringBuilder.append("当前时间为");
         stringBuilder.append(format);
         stringBuilder.append(" "+localTime);
         stringBuilder.append(",价格为");
         stringBuilder.append(price);
 
+        //输出
         System.out.println(stringBuilder);
     }
 }
