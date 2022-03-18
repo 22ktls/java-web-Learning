@@ -10,7 +10,13 @@ import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
 import org.apache.http.util.EntityUtils;
 
 import java.io.IOException;
-
+import java.io.StringReader;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
+import java.time.format.FormatStyle;
+import java.time.temporal.TemporalAccessor;
+import java.time.temporal.TemporalAdjusters;
 
 
 public class HttpGetTest {
@@ -19,22 +25,48 @@ public class HttpGetTest {
     public static void main(String[] args) throws IOException {
 
         PoolingHttpClientConnectionManager httpClientCM=new PoolingHttpClientConnectionManager();
-        doGet(httpClientCM);
-    }
-
-    //创建连接池
-    public static void doGet(PoolingHttpClientConnectionManager poolingHttpClient){
-        //设置httpclient
-        CloseableHttpClient httpClient = HttpClients.custom().setConnectionManager(poolingHttpClient).build();
 
         //设置爬取的接口
         String url = "https://j1.pupuapi.com/client/product/storeproduct/detail/7c1208da-907a-4391-9901-35a60096a3f9/f883cc75-7597-4c7a-a420-6ce5aa7fe2ed";
 
+        //获得数据
+        String data = doGet(httpClientCM, url);
+        
+        //获取规格
+        String specKey = "spec";
+        String priceKey="price";
+        String nameKey="name";
+        String marketPriceKey="market_price";
+        String shareContentKey="share_content";
+
+        JSONObject jsonObject = JSONObject.parseObject(data);
+
+        String productName = jsonObject.getString(nameKey);
+        String spec = jsonObject.getString(specKey);
+        Float price = jsonObject.getFloat(priceKey)/100;
+        Float marketPrice = jsonObject.getFloat(marketPriceKey)/100;
+        String content = jsonObject.getString(shareContentKey);
+
+        System.out.println("-----------商品："+productName+"------------------");
+        System.out.println("规格："+spec);
+        System.out.println("价格："+price);
+        System.out.println("原价/折扣价："+marketPrice+"/"+price);
+        System.out.println("详细内容："+content);
+        System.out.println("-------------\""+productName+"\"的价格波动--------------");
+        CheckCurrentPrice(priceKey,httpClientCM,url);
+
+
+
+    }
+
+    //创建连接池
+    public static String doGet(PoolingHttpClientConnectionManager poolingHttpClient,String url){
+        //设置httpclient
+        CloseableHttpClient httpClient = HttpClients.custom().setConnectionManager(poolingHttpClient).build();
         //创建请求
         HttpGet httpGet = new HttpGet(url);
         //创建响应容器
         CloseableHttpResponse response = null;
-
         try {
             //执行请求，获取响应数据
             response = httpClient.execute(httpGet);
@@ -49,11 +81,32 @@ public class HttpGetTest {
                 JSONObject jsonObject = JSONObject.parseObject(JsonData);
                 //获取jsonObJect对象的一个主要的属性信息
                 String data = jsonObject.getString("data");
+                return data;
             }
         } catch (IOException e) {
             e.printStackTrace();
         }
+        return null;
     }
 
+    private static void CheckCurrentPrice(String priceKey,PoolingHttpClientConnectionManager httpclient,String url){
+        String data = doGet(httpclient, url);
+        JSONObject jsonObject = JSONObject.parseObject(data);
+        Float price = jsonObject.getFloat(priceKey)/100;
+        LocalDateTime now = LocalDateTime.now();
 
+        String format = DateTimeFormatter.ofLocalizedDate(FormatStyle.FULL).format(now);
+
+        LocalTime localTime = now.toLocalTime();
+
+        StringBuilder stringBuilder = new StringBuilder();
+
+        stringBuilder.append("当前时间为");
+        stringBuilder.append(format);
+        stringBuilder.append(" "+localTime);
+        stringBuilder.append(",价格为");
+        stringBuilder.append(price);
+
+        System.out.println(stringBuilder);
+    }
 }
